@@ -7,10 +7,10 @@
   {git,"https://github.com/ninenines/cowlib",
        {ref,"824d807225f9b6f692be365635e1792c20cf9ad0"}},
   1},
- {<<"gpb">>,{pkg,<<"gpb">>,<<"4.0.2">>},1},
+ {<<"gpb">>,{pkg,<<"gpb">>,<<"4.17.0">>},1},
  {<<"grpc_lib">>,
   {git,"https://github.com/wallacegibbon/grpc_lib",
-       {ref,"ad87b54be8b2bf8e489b4f3af65c83d841fd550e"}},
+       {ref,"775eb7e65056eeb895748d202c3928c23b2b619f"}},
   0},
  {<<"ranch">>,
   {git,"https://github.com/ninenines/ranch",
@@ -18,7 +18,7 @@
   1}]}.
 [
 {pkg_hash,[
- {<<"gpb">>, <<"43CF080145BC5A8DFD4BB53FA3FD638469E0B3F0ADC1D283B26D7D934FC67267">>}]},
+ {<<"gpb">>, <<"0C315E3108FCB90B05C755CED0473D7CD82D514FEA08A5D8374B83DC3E3AB11A">>}]},
 {pkg_hash_ext,[
- {<<"gpb">>, <<"73002576C9DECABCB62B27C3ABF7BFA673C874E549914967E22C19D1C18FE357">>}]}
+ {<<"gpb">>, <<"2D24FE0FC8A604AD8D633D5C0FD1C5FF28C1162A195056363982737A8EDB3A05">>}]}
 ].
