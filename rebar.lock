@@ -1,4 +1,4 @@
-{"1.1.0",
+{"1.2.0",
 [{<<"cowboy">>,
   {git,"https://github.com/ninenines/cowboy",
        {ref,"a66eb5cd6e6c6b7a1948e3dde53a56017705a4f4"}},
@@ -9,8 +9,8 @@
   1},
  {<<"gpb">>,{pkg,<<"gpb">>,<<"4.0.2">>},1},
  {<<"grpc_lib">>,
-  {git,"https://github.com/Bluehouse-Technology/grpc_lib",
-       {ref,"1f195cfb52f9243ae67934da2e49498ba04578cd"}},
+  {git,"https://github.com/wallacegibbon/grpc_lib",
+       {ref,"ad87b54be8b2bf8e489b4f3af65c83d841fd550e"}},
   0},
  {<<"ranch">>,
   {git,"https://github.com/ninenines/ranch",
@@ -18,5 +18,7 @@
   1}]}.
 [
 {pkg_hash,[
- {<<"gpb">>, <<"43CF080145BC5A8DFD4BB53FA3FD638469E0B3F0ADC1D283B26D7D934FC67267">>}]}
+ {<<"gpb">>, <<"43CF080145BC5A8DFD4BB53FA3FD638469E0B3F0ADC1D283B26D7D934FC67267">>}]},
+{pkg_hash_ext,[
+ {<<"gpb">>, <<"73002576C9DECABCB62B27C3ABF7BFA673C874E549914967E22C19D1C18FE357">>}]}
 ].
