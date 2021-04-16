@@ -1,4 +1,4 @@
-%% Can be used to test the Erlang server implementation against the 
+%% Can be used to test the Erlang server implementation against the
 %% go client
 %%
 %% The go example client can be found here:
@@ -28,37 +28,42 @@
 
 -export([run/1, stop/0]).
 
--spec run(tcp|ssl|authenticated) -> ok.
+-spec run(tcp | ssl | authenticated) -> ok.
+
 run(How) ->
     compile(),
     {ok, _} = compile:file(filename:join(test_dir(),
                                          "test_route_guide_server.erl")),
-    {ok, _} = grpc:start_server(grpc, How, 10000,
-                                #{'RouteGuide' => #{handler => test_route_guide_server}}, 
-                                options(How)). 
+    {ok, _} = grpc:start_server(grpc,
+                                How,
+                                10000,
+                                #{'RouteGuide' =>
+                                      #{handler => test_route_guide_server}},
+                                options(How)).
 
-stop() ->
-    grpc:stop_server(grpc).
+stop() -> grpc:stop_server(grpc).
 
-options(tcp) ->
-    [];
+options(tcp) -> [];
 options(ssl) ->
-    [{transport_options, 
+    [{transport_options,
       [{certfile, certificate("localhost.crt")},
        {keyfile, certificate("localhost.key")},
        {cacertfile, certificate("My_Root_CA.crt")}]}].
 
 compile() ->
-    ok = grpc:compile("route_guide.proto", [{i, example_dir()}]),
+    ok = grpc:compile("route_guide.proto",
+                      [{i, example_dir()}]),
     {ok, _} = compile:file("route_guide.erl").
 
 example_dir() ->
-    filename:join(code:lib_dir(grpc, examples), "route_guide").
+    filename:join(code:lib_dir(grpc, examples),
+                  "route_guide").
 
-test_dir() ->
-    code:lib_dir(grpc, test).
+test_dir() -> code:lib_dir(grpc, test).
 
 certificate(FileName) ->
-    R = filename:join([test_dir(), "certificates", FileName]),
+    R = filename:join([test_dir(),
+                       "certificates",
+                       FileName]),
     true = filelib:is_file(R),
     R.

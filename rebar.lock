@@ -10,7 +10,7 @@
  {<<"gpb">>,{pkg,<<"gpb">>,<<"4.17.0">>},1},
  {<<"grpc_lib">>,
   {git,"https://github.com/wallacegibbon/grpc_lib",
-       {ref,"775eb7e65056eeb895748d202c3928c23b2b619f"}},
+       {ref,"71a21f518961c0e7aab9a9d5608428d2c6732328"}},
   0},
  {<<"ranch">>,
   {git,"https://github.com/ninenines/ranch",

@@ -1,7 +1,10 @@
-{application,grpc,
- [{description,"gRPC in Erlang"},
-  {vsn,"0.2.0"},
-  {modules,[]},
+{application,
+ grpc,
+ [{description, "gRPC in Erlang"},
+  {vsn, "0.2.0"},
+  {applications, [kernel, stdlib, gpb, cowboy]},
+  {modules, []},
   {registered, []},
-  {env, []},
-  {applications,[gpb,cowboy]}]}.
+  {env, []}]}
+
+.
