@@ -84,8 +84,10 @@
 
 -type error_message() :: binary().
 
--type error_response() :: {error, error_code(),
-                           error_message(), stream()}.
+-type error_response() :: {error,
+                           error_code(),
+                           error_message(),
+                           stream()}.
 
 -type handler_state() :: any().
 
@@ -121,7 +123,10 @@ compile(FileName) -> grpc:compile(FileName, []).
 %% from maps) and the option '{i, "."}' (so that .proto files in the
 %% current working directory will be found).
 compile(FileName, Options) ->
-    grpc_lib_compile:file(FileName, Options).
+    grpc_lib_compile:file(FileName,
+                          [{strings_as_binaries, true},
+                           {module_name_suffix, "_pb"}
+                           | Options]).
 
 -spec start_server(Name :: term(),
                    Transport :: ssl | tcp, Port :: integer(),
