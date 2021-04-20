@@ -275,7 +275,10 @@ execute(Msg,
         Decoded ->
             try Module:Function(Decoded, Stream, State) catch
                 {Code, ErrorMsg} -> {error, Code, ErrorMsg};
-                _:_ ->
+                T:I:S ->
+                    io:format(standard_error,
+                              "grpc_server:execute ~p:~p, stacktrace:~n~p~n",
+                              [T, I, S]),
                     {error,
                      ?GRPC_STATUS_INTERNAL_INT,
                      <<"Internal server error">>,

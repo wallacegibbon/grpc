@@ -84,10 +84,8 @@
 
 -type error_message() :: binary().
 
--type error_response() :: {error,
-                           error_code(),
-                           error_message(),
-                           stream()}.
+-type error_response() :: {error, error_code(),
+                           error_message(), stream()}.
 
 -type handler_state() :: any().
 
