@@ -33,22 +33,15 @@
 %% 50% depleted.
 -module(grpc_stream_handler).
 
--export([init/3, terminate/3]).
+-export([init/3, terminate/3, data/4, info/3, early_error/5]).
 
--export([data/4, info/3]).
-
--export([early_error/5]).
-
--record(state,
-        {next :: any(), bytes_received :: integer()}).
+-record(state, {next :: any(), bytes_received :: integer()}).
 
 -spec init(cowboy_stream:streamid(), cowboy_req:req(),
            cowboy:opts()) -> {cowboy_stream:commands(), #state{}}.
 
 init(StreamID, Req, Opts) ->
-    {Commands0, Next} = cowboy_stream:init(StreamID,
-                                           Req,
-                                           Opts),
+    {Commands0, Next} = cowboy_stream:init(StreamID, Req, Opts),
     {Commands0, #state{bytes_received = 0, next = Next}}.
 
 -spec data(cowboy_stream:streamid(),
@@ -57,20 +50,15 @@ init(StreamID, Req, Opts) ->
                       State} when State :: #state{}.
 
 data(StreamID, IsFin, Data,
-     State0 = #state{bytes_received = Received,
-                     next = Next0}) ->
-    {Commands0, Next} = cowboy_stream:data(StreamID,
-                                           IsFin,
-                                           Data,
-                                           Next0),
+     #state{bytes_received = Received, next = Next0} = State0) ->
+    {Commands0, Next} = cowboy_stream:data(StreamID, IsFin, Data, Next0),
     Size = size(Data),
     TotalReceived = Size + Received,
     %% io:format("received ~p bytes, total now: ~p~n", [Size, TotalReceived]),
     case TotalReceived > 32767 of
         false ->
             {Commands0,
-             State0#state{next = Next,
-                          bytes_received = TotalReceived}};
+             State0#state{next = Next, bytes_received = TotalReceived}};
         true ->
             Increment = TotalReceived, %% top up
             %% io:format("sending WINDOW_UPDATEs (~p bytes)~n", [Increment]),
@@ -83,9 +71,7 @@ data(StreamID, IsFin, Data,
                       State} when State :: #state{}.
 
 info(StreamID, Info, State0 = #state{next = Next0}) ->
-    {Commands0, Next} = cowboy_stream:info(StreamID,
-                                           Info,
-                                           Next0),
+    {Commands0, Next} = cowboy_stream:info(StreamID, Info, Next0),
     Commands = remove_date_and_server(Commands0),
     {Commands, State0#state{next = Next}}.
 
@@ -97,15 +83,11 @@ terminate(StreamID, Reason, #state{next = Next}) ->
 
 -spec early_error(cowboy_stream:streamid(),
                   cowboy_stream:reason(), cowboy_stream:partial_req(),
-                  Resp, cowboy:opts()) -> Resp when Resp ::
-                                                        cowboy_stream:resp_command().
+                  Resp, cowboy:opts()) ->
+    Resp when Resp :: cowboy_stream:resp_command().
 
 early_error(StreamID, Reason, PartialReq, Resp, Opts) ->
-    cowboy_stream:early_error(StreamID,
-                              Reason,
-                              PartialReq,
-                              Resp,
-                              Opts).
+    cowboy_stream:early_error(StreamID, Reason, PartialReq, Resp, Opts).
 
 %%-----------------------------------------------------------------------------
 %% Internal functions
@@ -117,6 +99,8 @@ remove_date_and_server(Commands) ->
                 {headers,
                  Status,
                  maps:without([<<"date">>, <<"server">>], Headers)};
-            (Other) -> Other
+            (Other) ->
+                Other
         end,
     [F(C) || C <- Commands].
+

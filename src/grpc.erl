@@ -29,23 +29,13 @@
 %%
 -module(grpc).
 
--export([compile/1, compile/2]).
+-export([compile/1, compile/2, send/2, send_headers/1, send_headers/2]).
 
--export([send/2, send_headers/1, send_headers/2]).
+-export([set_compression/2, set_headers/2, set_trailers/2]).
 
--export([set_compression/2,
-         set_headers/2,
-         set_trailers/2]).
+-export([start_server/4, start_server/5, stop_server/1]).
 
--export([start_server/4,
-         start_server/5,
-         stop_server/1]).
-
--export([authority/1,
-         metadata/1,
-         method/1,
-         path/1,
-         scheme/1]).
+-export([authority/1, metadata/1, method/1, path/1, scheme/1]).
 
 -type service_spec() :: #{handler := module(),
                           decoder => module(),
@@ -61,22 +51,19 @@
 %% The 'decoder' is also optional: by default the result of the 'decoder/0'
 %% function in the handler module will be used.
 
--type services() :: #{ServiceName :: atom() :=
-                          service_spec()}.
+-type services() :: #{ServiceName :: atom() := service_spec()}.
 
 %% Links each gRPC service to a 'service_spec()'. The 'service_spec()' contains
 %% the information that the server needs to execute the service.
 
--type option() :: {transport_options,
-                   [ranch_ssl:ssl_opt()]} |
+-type option() :: {transport_options, [ranch_ssl:ssl_opt()]} |
                   {num_acceptors, integer()}.
 
 -type metadata_key() :: binary().
 
 -type metadata_value() :: binary().
 
--type metadata() :: #{metadata_key() =>
-                          metadata_value()}.
+-type metadata() :: #{metadata_key() => metadata_value()}.
 
 -type compression_method() :: none | gzip.
 
@@ -95,14 +82,8 @@
 %% the implementation of 'RecordRoute' in the tutorial for an example.
 -opaque stream() :: map().
 
--export_type([option/0,
-              services/0,
-              error_response/0,
-              compression_method/0,
-              stream/0,
-              metadata_key/0,
-              metadata_value/0,
-              metadata/0]).
+-export_type([option/0, services/0, error_response/0, compression_method/0,
+              stream/0, metadata_key/0, metadata_value/0, metadata/0]).
 
 -spec compile(FileName :: string()) -> ok.
 
@@ -128,22 +109,18 @@ compile(FileName, Options) ->
 
 -spec start_server(Name :: term(),
                    Transport :: ssl | tcp, Port :: integer(),
-                   Services :: services()) -> {ok,
-                                               CowboyListenerPid :: pid()} |
+                   Services :: services()) -> {ok, CowboyListenerPid :: pid()} |
                                               {error, any()}.
 
 %% @equiv start_server(Name, Transport, Port, Services, [])
-start_server(Name, Transport, Port, Services)
-    when is_map(Services) ->
+start_server(Name, Transport, Port, Services) when is_map(Services) ->
     start_server(Name, Transport, Port, Services, []).
 
 -spec start_server(Name :: term(),
                    Transport :: ssl | tcp, Port :: integer(),
-                   Services :: services(), Options :: [option()]) -> {ok,
-                                                                      CowboyListenerPid ::
-                                                                          pid()} |
-                                                                     {error,
-                                                                      any()}.
+                   Services :: services(), Options :: [option()]) ->
+    {ok, CowboyListenerPid :: pid()} |
+    {error, any()}.
 
 %% @doc Start a gRPC server.
 %%
@@ -153,18 +130,14 @@ start_server(Name, Transport, Port, Services)
 %% 'Services' is a map that links each gRPC service to the module that implements
 %% it (with some optional additional information).
 start_server(Name, Transport, Port, Services, Options)
-    when is_map(Services), is_list(Options) ->
-    grpc_server:start(Name,
-                      Transport,
-                      Port,
-                      Services,
-                      Options).
+        when is_map(Services), is_list(Options) ->
+    grpc_server:start(Name, Transport, Port, Services, Options).
 
--spec stop_server(Name :: term()) -> ok |
-                                     {error, not_found}.
+-spec stop_server(Name :: term()) -> ok | {error, not_found}.
 
 %% @doc Stop a gRPC server.
-stop_server(Name) -> grpc_server:stop(Name).
+stop_server(Name) ->
+    grpc_server:stop(Name).
 
 -spec send(stream(), map() | [map()]) -> stream().
 
@@ -172,22 +145,20 @@ stop_server(Name) -> grpc_server:stop(Name).
 %%
 %% This function can be used in the service implementation to send
 %% one or more messages to the client via a stream.
-send(Stream, MsgList)
-    when is_map(Stream), is_list(MsgList) ->
+send(Stream, MsgList) when is_map(Stream), is_list(MsgList) ->
     lists:foldl(fun (M, S) -> send(S, M) end,
                 Stream,
                 MsgList);
-send(#{headers_sent := false} = Stream, Msg)
-    when is_map(Stream), is_map(Msg) ->
+send(#{headers_sent := false} = Stream, Msg) when is_map(Stream), is_map(Msg) ->
     send(send_headers(Stream), Msg);
-send(#{cowboy_req := CowboyReq, service := Service,
-       rpc := Rpc, decoder := Decoder,
-       compression := Compression, headers_sent := true} =
-         Stream,
+send(#{cowboy_req := CowboyReq, service := Service, rpc := Rpc,
+       decoder := Decoder, compression := Compression,
+       headers_sent := true} = Stream,
      Msg)
-    when is_map(Msg) ->
+        when is_map(Msg) ->
     %% TODO: check on max length
-    try grpc_lib:encode_output(Service, Rpc, Decoder, Msg)
+    try
+        grpc_lib:encode_output(Service, Rpc, Decoder, Msg)
     of
         Encoded ->
             {Data, Compressed} = case Compression of
@@ -200,10 +171,7 @@ send(#{cowboy_req := CowboyReq, service := Service,
             Stream
     catch
         _:_Error ->
-            throw({error,
-                   <<"2">>,
-                   <<"Error encoding response">>,
-                   Stream})
+            throw({error, <<"2">>, <<"Error encoding response">>, Stream})
     end.
 
 -spec set_headers(stream(), metadata()) -> stream().
@@ -224,8 +192,7 @@ set_headers(#{headers := Metadata} = Stream, Headers) ->
 %% This function can be used in the service implementation to add
 %% metadata to a stream. The metadata will be sent to the client (as HTTP/2 end headers)
 %% after the response message(s) has/have been sent.
-set_trailers(#{trailers := Metadata} = Stream,
-             Trailers) ->
+set_trailers(#{trailers := Metadata} = Stream, Trailers) ->
     Stream#{trailers => maps:merge(Metadata, Trailers)}.
 
 -spec send_headers(stream()) -> stream().
@@ -233,7 +200,8 @@ set_trailers(#{trailers := Metadata} = Stream,
 %% Send headers. Silently ignored if headers were already sent.
 send_headers(#{headers_sent := true} = Stream) ->
     Stream;
-send_headers(Stream) -> send_headers(Stream, #{}).
+send_headers(Stream) ->
+    send_headers(Stream, #{}).
 
 -spec send_headers(stream(), metadata()) -> stream().
 
@@ -242,15 +210,13 @@ send_headers(#{cowboy_req := Req, headers := Metadata,
                  Stream,
              Headers) ->
     MergedHeaders =
-        grpc_lib:maybe_encode_headers(maps:merge(Metadata,
-                                                 Headers)),
+        grpc_lib:maybe_encode_headers(maps:merge(Metadata, Headers)),
     AllHeaders = case Compression of
                      none -> MergedHeaders;
                      gzip ->
                          MergedHeaders#{<<"grpc-encoding">> => <<"gzip">>}
                  end,
-    Stream#{cowboy_req =>
-                cowboy_req:stream_reply(200, AllHeaders, Req),
+    Stream#{cowboy_req => cowboy_req:stream_reply(200, AllHeaders, Req),
             headers_sent => true}.
 
 -spec metadata(Stream :: stream()) -> metadata().
@@ -261,33 +227,37 @@ send_headers(#{cowboy_req := Req, headers := Metadata,
 %% metadata), except for :method, :authority, :scheme and :path (there are
 %% separate functions to get access to those). But if there is for example a
 %% grpc-timeout header this will also be returned as metadata.
-metadata(#{metadata := Metadata}) -> Metadata.
+metadata(#{metadata := Metadata}) ->
+    Metadata.
 
 -spec authority(Stream :: stream()) -> binary().
 
 %% @doc Get the value for the :authority header.
-authority(#{authority := Value}) -> Value.
+authority(#{authority := Value}) ->
+    Value.
 
 -spec scheme(Stream :: stream()) -> binary().
 
 %% @doc Get the value for the :scheme header.
-scheme(#{scheme := Value}) -> Value.
+scheme(#{scheme := Value}) ->
+    Value.
 
 -spec path(Stream :: stream()) -> binary().
 
 %% @doc Get the value for the :path header.
-path(#{path := Value}) -> Value.
+path(#{path := Value}) ->
+    Value.
 
 -spec method(Stream :: stream()) -> binary().
 
 %% @doc Get the value for the :method header.
-method(#{method := Value}) -> Value.
+method(#{method := Value}) ->
+    Value.
 
--spec set_compression(stream(),
-                      compression_method()) -> stream().
+-spec set_compression(stream(), compression_method()) -> stream().
 
 %% @doc Enable compression of response messages. Currently only gzip or
 %% none (no compression, the default) are supported.
-set_compression(Stream, Method)
-    when Method =:= none; Method =:= gzip ->
+set_compression(Stream, Method) when Method =:= none; Method =:= gzip ->
     Stream#{compression => Method}.
+

@@ -19,8 +19,7 @@
 %%--------------------------------------------------------------------
 
 -define(BVM_TRAIL,
-        "Berkshire Valley Management Area Trail, "
-        "Jefferson, NJ, USA").
+        "Berkshire Valley Management Area Trail, Jefferson, NJ, USA").
 
 -define(BVM_TRAIL_POINT,
         #{latitude => 409146138, longitude => -746188906}).
@@ -111,12 +110,9 @@ all() -> [{group, tutorial}].
 %%-------------------------------------------------------------------------
 
 compile_routeguide_proto(_Config) ->
-    ExampleDir = filename:join(code:lib_dir(grpc, examples),
-                               "route_guide"),
-    ok = grpc:compile("route_guide.proto",
-                      [{i, ExampleDir}]),
-    ok = grpc_client:compile("route_guide.proto",
-                             [{i, ExampleDir}]),
+    ExampleDir = filename:join(code:lib_dir(grpc, examples), "route_guide"),
+    ok = grpc:compile("route_guide.proto", [{i, ExampleDir}]),
+    ok = grpc_client:compile("route_guide.proto", [{i, ExampleDir}]),
     true = lists:all(fun (F) -> filelib:is_file(F) end,
                      ["route_guide.erl",
                       "route_guide_server.erl",
@@ -125,20 +121,15 @@ compile_routeguide_proto(_Config) ->
 run_getfeature(Config) ->
     process_flag(trap_exit, true),
     Port = port(Config),
-    {ok, Connection} = grpc_client:connect(tcp,
-                                           "localhost",
-                                           Port),
+    {ok, Connection} = grpc_client:connect(tcp, "localhost", Port),
     {ok, #{result := #{name := ?BVM_TRAIL}}} =
         feature(Connection, ?BVM_TRAIL_POINT).
 
 continuation(Config) ->
-    {ok, Connection} = grpc_client:connect(tcp,
-                                           "localhost",
-                                           port(Config)),
+    {ok, Connection} = grpc_client:connect(tcp, "localhost", port(Config)),
     %% default max message size = 16384. Note that this will be compressed
     %% so we need something that is hard to compress.
-    BigHeader = list_to_binary([rand:uniform(255)
-                                || _ <- lists:seq(1, 20000)]),
+    BigHeader = list_to_binary([rand:uniform(255) || _ <- lists:seq(1, 20000)]),
     {ok, #{result := #{name := ?BVM_TRAIL}}} =
         feature(Connection,
                 ?BVM_TRAIL_POINT,
@@ -147,13 +138,10 @@ continuation(Config) ->
                     <<"test_case">> => <<"big_header_to_server">>}}]).
 
 continuation_resp(Config) ->
-    {ok, Connection} = grpc_client:connect(tcp,
-                                           "localhost",
-                                           port(Config)),
+    {ok, Connection} = grpc_client:connect(tcp, "localhost", port(Config)),
     %% default max message size = 16384. Note that this will be compressed
     %% so we need something that is hard to compress.
-    BigHeader = list_to_binary([rand:uniform(255)
-                                || _ <- lists:seq(1, 20000)]),
+    BigHeader = list_to_binary([rand:uniform(255) || _ <- lists:seq(1, 20000)]),
     {ok, #{result := #{name := ?BVM_TRAIL}}} =
         feature(Connection,
                 ?BVM_TRAIL_POINT,
@@ -162,24 +150,22 @@ continuation_resp(Config) ->
                     <<"test_case">> => <<"big_header_echo">>}}]).
 
 run_listfeatures(Config) ->
-    {ok, Connection} = grpc_client:connect(tcp,
-                                           "localhost",
-                                           port(Config)),
+    {ok, Connection} = grpc_client:connect(tcp, "localhost", port(Config)),
     {ok, Stream} = grpc_client:new_stream(Connection,
                                           'RouteGuide',
                                           'ListFeatures',
                                           route_guide),
     P1 = (?BVM_TRAIL_POINT),
     P2 = (?BVM_TRAIL_POINT),
-    ok = grpc_client:send_last(Stream,
-                               #{lo => P1, hi => P2}),
+    ok = grpc_client:send_last(Stream, #{lo => P1, hi => P2}),
     %% A little bit of time will pass before the response arrives...
     timer:sleep(500),
     {headers, #{<<":status">> := <<"200">>}} =
         grpc_client:get(Stream),
     {data, #{name := ?BVM_TRAIL}} = grpc_client:get(Stream).
 
-run_routechat(Config) -> route_chat(Config, [], []).
+run_routechat(Config) ->
+    route_chat(Config, [], []).
 
 routechat_flow_control(Config) ->
     WindowManager = window_manager(0),
@@ -198,9 +184,7 @@ routechat_throttled(Config) ->
                [{http2_options, [{window_mgmt_fun, WindowManager}]}]).
 
 route_chat(Config, ConnectionOptions, StreamOptions) ->
-    {ok, Connection} = grpc_client:connect(tcp,
-                                           "localhost",
-                                           port(Config),
+    {ok, Connection} = grpc_client:connect(tcp, "localhost", port(Config),
                                            ConnectionOptions),
     {ok, Stream} = grpc_client:new_stream(Connection,
                                           'RouteGuide',
@@ -241,22 +225,16 @@ receive_n_times(N, Stream) ->
      || _ <- lists:seq(1, N)].
 
 ping(Config) ->
-    {ok, Connection} = grpc_client:connect(tcp,
-                                           "localhost",
-                                           port(Config)),
+    {ok, Connection} = grpc_client:connect(tcp, "localhost", port(Config)),
     {ok, _} = grpc_client:ping(Connection, 500).
 
 ping_timeout(Config) ->
-    {ok, Connection} = grpc_client:connect(tcp,
-                                           "localhost",
-                                           port(Config)),
+    {ok, Connection} = grpc_client:connect(tcp, "localhost", port(Config)),
     %% Presumably a timeout value of 0 will result in a timeout.
     {error, timeout} = grpc_client:ping(Connection, 0).
 
 run_recordroute(Config) ->
-    {ok, Connection} = grpc_client:connect(tcp,
-                                           "localhost",
-                                           port(Config)),
+    {ok, Connection} = grpc_client:connect(tcp, "localhost", port(Config)),
     {ok, Stream} = grpc_client:new_stream(Connection,
                                           'RouteGuide',
                                           'RecordRoute',
@@ -267,13 +245,10 @@ run_recordroute(Config) ->
     ok = grpc_client:send_last(Stream, P2),
     {headers, #{<<":status">> := <<"200">>}} =
         grpc_client:rcv(Stream, 500),
-    {data, #{point_count := 2}} = grpc_client:rcv(Stream,
-                                                  500).
+    {data, #{point_count := 2}} = grpc_client:rcv(Stream, 500).
 
 receive_many_messages(Config) ->
-    {ok, Connection} = grpc_client:connect(tcp,
-                                           "localhost",
-                                           port(Config)),
+    {ok, Connection} = grpc_client:connect(tcp, "localhost", port(Config)),
     Count = 30,
     Size = 3000,
     Options = [{metadata,
@@ -286,8 +261,7 @@ receive_many_messages(Config) ->
                                           Options),
     P1 = #{latitude => 1, longitude => 2},
     P2 = #{latitude => 3, longitude => 5},
-    ok = grpc_client:send_last(Stream,
-                               #{hi => P1, lo => P2}),
+    ok = grpc_client:send_last(Stream, #{hi => P1, lo => P2}),
     %% A little bit of time will pass before the response arrives...
     timer:sleep(500),
     {headers, _} = grpc_client:get(Stream),
@@ -305,9 +279,7 @@ secure_request(Config) ->
                 [{transport,
                   {ssl,
                    [{cacertfile, certificate("My_Root_CA.crt")}]}}]}],
-    {ok, Connection} = grpc_client:connect(ssl,
-                                           "localhost",
-                                           port(Config),
+    {ok, Connection} = grpc_client:connect(ssl, "localhost", port(Config),
                                            Options),
     {ok, #{result := #{name := ?BVM_TRAIL}}} =
         feature(Connection, ?BVM_TRAIL_POINT).
@@ -327,19 +299,14 @@ tls_connection_fails(Config) ->
                    [{verify, verify_peer},
                     {cacertfile, certificate("My_Root_CA.crt")}]}}]}],
     {error, {tls_alert, "handshake failure"}} =
-        grpc_client:connect(ssl,
-                            "localhost",
-                            port(Config),
-                            Options).
+        grpc_client:connect(ssl, "localhost", port(Config), Options).
 
 ssl_without_server_identification(Config) ->
     process_flag(trap_exit, true),
     TlsOptions = [{verify, verify_peer},
                   {fail_if_no_peer_cert, true},
                   {cacertfile, certificate("My_Root_CA.crt")}],
-    {ok, Connection} = grpc_client:connect(ssl,
-                                           "localhost",
-                                           port(Config),
+    {ok, Connection} = grpc_client:connect(ssl, "localhost", port(Config),
                                            TlsOptions),
     {ok, #{result := #{name := ?BVM_TRAIL}}} =
         feature(Connection, ?BVM_TRAIL_POINT).
@@ -349,9 +316,7 @@ authenticated_request(Config) ->
     TlsOptions = [{certfile, certificate("127.0.0.1.crt")},
                   {keyfile, certificate("127.0.0.1.key")},
                   {cacertfile, certificate("My_Root_CA.crt")}],
-    {ok, Connection} = grpc_client:connect(ssl,
-                                           "localhost",
-                                           port(Config),
+    {ok, Connection} = grpc_client:connect(ssl, "localhost", port(Config),
                                            TlsOptions),
     {ok, #{result := #{name := ?BVM_TRAIL}}} =
         feature(Connection, ?BVM_TRAIL_POINT).
@@ -364,9 +329,7 @@ wrong_client_certificate(Config) ->
     TlsOptions = [{certfile, certificate("localhost.crt")},
                   {keyfile, certificate("localhost.key")},
                   {cacertfile, certificate("My_Root_CA.crt")}],
-    {ok, Connection} = grpc_client:connect(ssl,
-                                           "localhost",
-                                           port(Config),
+    {ok, Connection} = grpc_client:connect(ssl, "localhost", port(Config),
                                            TlsOptions),
     {error, #{error_type := grpc, grpc_status := 16}} =
         feature(Connection, ?BVM_TRAIL_POINT).
@@ -379,17 +342,12 @@ feature(Connection, Message) ->
     feature(Connection, Message, []).
 
 feature(Connection, Message, Options) ->
-    grpc_client:unary(Connection,
-                      Message,
-                      'RouteGuide',
-                      'GetFeature',
-                      route_guide,
-                      Options).
+    grpc_client:unary(Connection, Message, 'RouteGuide', 'GetFeature',
+                      route_guide, Options).
 
 %% Example certificates are in "test/certificates".
 cert_dir() ->
-    CertDir = filename:join([code:lib_dir(grpc, test),
-                             "certificates"]),
+    CertDir = filename:join([code:lib_dir(grpc, test), "certificates"]),
     true = filelib:is_dir(CertDir),
     CertDir.
 
@@ -405,7 +363,8 @@ certificate(FileName) ->
     true = filelib:is_file(R),
     R.
 
-port(Config) -> proplists:get_value(port, Config).
+port(Config) ->
+    proplists:get_value(port, Config).
 
 window_manager(Sleep) ->
     fun (Current, Initial, _, Data) ->
@@ -416,7 +375,8 @@ window_manager(Sleep) ->
                     {ok, Data};
                 true ->
                     case Sleep of
-                        0 -> ok;
+                        0 ->
+                            ok;
                         _ ->
                             io:format("sleep...~n"),
                             timer:sleep(Sleep)
@@ -425,3 +385,4 @@ window_manager(Sleep) ->
                     {{window_update, Initial - Current}, Data}
             end
     end.
+

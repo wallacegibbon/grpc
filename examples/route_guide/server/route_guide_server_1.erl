@@ -4,34 +4,24 @@
 %% A simple implementation of the services has been added to the
 %% generated skeleton functions.
 
--export([server_name/0,
-         decoder/0,
-         'GetFeature'/3,
-         'ListFeatures'/3,
-         'RecordRoute'/3,
-         'RouteChat'/3]).
+-export([server_name/0, decoder/0,
+         'GetFeature'/3, 'ListFeatures'/3, 'RecordRoute'/3, 'RouteChat'/3]).
 
 -type 'RouteSummary'() ::
-    #{point_count => integer(),
-      feature_count => integer(),
-      distance => integer(),
-      elapsed_time => integer()}.
+    #{point_count => integer(), feature_count => integer(),
+      distance => integer(), elapsed_time => integer()}.
 
 -type 'Point'() ::
-    #{latitude => integer(),
-      longitude => integer()}.
+    #{latitude => integer(), longitude => integer()}.
 
 -type 'Rectangle'() ::
-    #{lo => 'Point'(),
-      hi => 'Point'()}.
+    #{lo => 'Point'(), hi => 'Point'()}.
 
 -type 'RouteNote'() ::
-    #{location => 'Point'(),
-      message => string()}.
+    #{location => 'Point'(), message => string()}.
 
 -type 'Feature'() ::
-    #{name => string(),
-      location => 'Point'()}.
+    #{name => string(), location => 'Point'()}.
 
 -spec server_name() -> atom().
 %% The name of the Cowboy server that will be started.
